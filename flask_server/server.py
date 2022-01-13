@@ -2,6 +2,7 @@ import os
 import configparser
 
 from flask import Flask
+from flask_cors import CORS
 from flask_restful import Api
 
 from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
@@ -14,6 +15,7 @@ class Server:
         self.port = port
         self.debug = debug
         self.app = Flask(__name__)
+        cors = CORS(self.app, resources={r"/*": {"origins": "*"}})
         self.api = Api(self.app)
         self.api.add_resource(TemperatureHe, '/temperatureHe/<int:number>')
         self.api.add_resource(TemperatureOutside, '/temperatureOutside')
