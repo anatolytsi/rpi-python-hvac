@@ -4,6 +4,8 @@ WORKDIR /app
 RUN chmod 777 /app
 
 COPY . ./
+COPY ../rpi_interface.py ./pi_interface.py
+COPY ../.env ./.env
 
 RUN pip3 install -r requirements.txt
 
