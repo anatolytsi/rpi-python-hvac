@@ -3,10 +3,11 @@ FROM python:3.8-slim-buster
 WORKDIR /app
 RUN chmod 777 /app
 
-COPY . ./
-COPY ../rpi_interface.py ./pi_interface.py
-COPY ../.env ./.env
-
+COPY ./flask_server/requirements.txt ./requirements.txt
 RUN pip3 install -r requirements.txt
 
-CMD ["python3", "flask_server/server.py"]
+COPY ./flask_server ./
+COPY ./rpi_interface.py ./rpi_interface.py
+COPY ./.env ./.env
+
+CMD ["python3", "server.py"]
