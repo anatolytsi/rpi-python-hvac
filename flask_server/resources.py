@@ -15,13 +15,13 @@ load_dotenv()
 
 basic_username = os.getenv('USERNAME')
 basic_password = os.getenv('PASSWORD')
-basic_username_hash = hashlib.md5(os.getenv('USERNAME').encode())
-basic_password_hash = hashlib.md5(os.getenv('PASSWORD').encode())
+basic_username_hash = f'{hashlib.md5(os.getenv("USERNAME").encode("utf-8")).hexdigest()}'
+basic_password_hash = f'{hashlib.md5(os.getenv("PASSWORD").encode("utf-8")).hexdigest()}'
 
 su_username = os.getenv('SU_USERNAME')
 su_password = os.getenv('SU_PASSWORD')
-su_username_hash = hashlib.md5(os.getenv('SU_USERNAME').encode())
-su_password_hash = hashlib.md5(os.getenv('SU_PASSWORD').encode())
+su_username_hash = f'{hashlib.md5(os.getenv("SU_USERNAME").encode("utf-8")).hexdigest()}'
+su_password_hash = f'{hashlib.md5(os.getenv("SU_PASSWORD").encode("utf-8")).hexdigest()}'
 
 auth = BasicRoleAuth()
 auth.add_user(user=basic_username, password=basic_password, roles='user')
