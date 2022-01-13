@@ -1,8 +1,10 @@
+import base64
 import os
 import hashlib
 from enum import Enum
 
 from dotenv import load_dotenv
+from flask import request
 from flask_restful import Resource, reqparse
 from flask_basic_roles import BasicRoleAuth
 
@@ -145,3 +147,14 @@ class Valve(Resource):
             return close_valve(number)
         else:
             raise Exception(f'Incorrect action name {args.action.value}')
+
+
+class SuAccess(Resource):
+    @staticmethod
+    @auth.require(roles=('user', 'superuser'))
+    def get():
+        token = request.headers['Authorization']
+        username, password = base64.b64decode(token.split('Basic ')[-1]).decode('utf-8').split(':')
+        if username in [su_username, su_username_hash]:
+            return True
+        return False

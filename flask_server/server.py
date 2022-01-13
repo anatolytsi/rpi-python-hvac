@@ -4,7 +4,8 @@ import configparser
 from flask import Flask
 from flask_restful import Api
 
-from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve
+from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
+    SuAccess
 
 
 class Server:
@@ -21,6 +22,7 @@ class Server:
         self.api.add_resource(Hysteresis, '/hysteresis')
         self.api.add_resource(Mode, '/mode')
         self.api.add_resource(Valve, '/valve/<int:number>')
+        self.api.add_resource(SuAccess, '/suAccess')
 
     def run(self):
         self.app.run(self.host, self.port, self.debug)
