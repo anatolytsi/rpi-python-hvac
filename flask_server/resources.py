@@ -10,6 +10,7 @@ from flask_basic_roles import BasicRoleAuth
 
 from rpi_interface import get_he_temperature, get_outside_temperature, get_inside_temperature, get_feed_temperature, \
     set_feed_temperature, get_hysteresis, set_hysteresis, get_mode, set_mode, get_valve_opened, open_valve, close_valve
+from rpi_interface import Mode as OpMode
 
 load_dotenv()
 
@@ -117,9 +118,9 @@ class Mode(Resource):
     @auth.require(roles=('superuser',))
     def post():
         parser = reqparse.RequestParser()
-        parser.add_argument('type', type=Mode, help='Operation mode')
+        parser.add_argument('type', type=OpMode, help='Operation mode')
         args = parser.parse_args()
-        return set_mode(args.type.value)
+        return set_mode(args.type)
 
 
 class ValveAction(Enum):
