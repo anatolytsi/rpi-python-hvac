@@ -85,7 +85,7 @@ class TemperatureFeed(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=float, help='Feed temperature value')
         args = parser.parse_args()
-        return set_feed_temperature(args['value'])
+        return set_feed_temperature(args.value)
 
 
 class Hysteresis(Resource):
@@ -102,7 +102,7 @@ class Hysteresis(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=int, help='Hysteresis value')
         args = parser.parse_args()
-        return set_hysteresis(args['value'])
+        return set_hysteresis(args.value)
 
 
 class Mode(Resource):
@@ -119,7 +119,7 @@ class Mode(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=Mode, help='Operation mode')
         args = parser.parse_args()
-        return set_mode(args.type)
+        return set_mode(args.type.value)
 
 
 class ValveAction(Enum):
