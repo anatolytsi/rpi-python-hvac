@@ -5,6 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 
+from flask_server.rpi_interface import HvacRpi
 from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
     SuAccess
 
@@ -17,6 +18,21 @@ class Server:
         self.app = Flask(__name__)
         cors = CORS(self.app, resources={r"/*": {"origins": "*"}})
         self.api = Api(self.app)
+        hvac = HvacRpi()
+        self._assign_hvac(hvac)
+        self._add_resources()
+
+    @staticmethod
+    def _assign_hvac(hvac: HvacRpi):
+        TemperatureHe.hvac = hvac
+        TemperatureOutside.hvac = hvac
+        TemperatureInside.hvac = hvac
+        TemperatureFeed.hvac = hvac
+        Hysteresis.hvac = hvac
+        Mode.hvac = hvac
+        Valve.hvac = hvac
+
+    def _add_resources(self):
         self.api.add_resource(TemperatureHe, '/temperatureHe/<int:number>')
         self.api.add_resource(TemperatureOutside, '/temperatureOutside')
         self.api.add_resource(TemperatureInside, '/temperatureInside')

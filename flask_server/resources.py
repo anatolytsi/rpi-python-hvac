@@ -8,8 +8,6 @@ from flask import request
 from flask_restful import Resource, reqparse
 from flask_basic_roles import BasicRoleAuth
 
-from rpi_interface import get_he_temperature, get_outside_temperature, get_inside_temperature, get_feed_temperature, \
-    set_feed_temperature, get_hysteresis, set_hysteresis, get_mode, set_mode, get_valve_opened, open_valve, close_valve
 from rpi_interface import Mode as OpMode
 
 load_dotenv()
@@ -49,78 +47,81 @@ def catch_error(func):
 
 
 class TemperatureHe(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get(number):
-        return get_he_temperature(number)
+    def get(self, number):
+        return self.hvac.get_he_temperature(number)
 
 
 class TemperatureOutside(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get():
-        return get_outside_temperature()
+    def get(self):
+        return self.hvac.get_outside_temperature()
 
 
 class TemperatureInside(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get():
-        return get_inside_temperature()
+    def get(self):
+        return self.hvac.get_inside_temperature()
 
 
 class TemperatureFeed(Resource):
-    @staticmethod
-    @catch_error
-    @auth.require(roles=('user', 'superuser'))
-    def get():
-        return get_feed_temperature()
+    hvac = None
 
-    @staticmethod
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def post():
+    def get(self):
+        return self.hvac.get_feed_temperature()
+
+    @catch_error
+    @auth.require(roles=('user', 'superuser'))
+    def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=float, help='Feed temperature value')
         args = parser.parse_args()
-        return set_feed_temperature(args.value)
+        return self.hvac.set_feed_temperature(args.value)
 
 
 class Hysteresis(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get():
-        return get_hysteresis()
+    def get(self):
+        return self.hvac.get_hysteresis()
 
-    @staticmethod
     @catch_error
     @auth.require(roles=('superuser',))
-    def post():
+    def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=int, help='Hysteresis value')
         args = parser.parse_args()
-        return set_hysteresis(args.value)
+        return self.hvac.set_hysteresis(args.value)
 
 
 class Mode(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get():
-        return get_mode()
+    def get(self):
+        return self.hvac.get_mode()
 
-    @staticmethod
     @catch_error
     @auth.require(roles=('superuser',))
-    def post():
+    def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=OpMode, help='Operation mode')
         args = parser.parse_args()
-        return set_mode(args.type)
+        return self.hvac.set_mode(args.type)
 
 
 class ValveAction(Enum):
@@ -129,23 +130,23 @@ class ValveAction(Enum):
 
 
 class Valve(Resource):
-    @staticmethod
+    hvac = None
+
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    def get(number):
-        return get_valve_opened(number)
+    def get(self, number):
+        return self.hvac.get_valve_opened(number)
 
-    @staticmethod
     @catch_error
     @auth.require(roles=('superuser',))
-    def post(number):
+    def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=ValveAction, help='Valve action type')
         args = parser.parse_args()
         if args.action.value == 'open':
-            return open_valve(number)
+            return self.hvac.open_valve(number)
         elif args.action.value == 'close':
-            return close_valve(number)
+            return self.hvac.close_valve(number)
         else:
             raise Exception(f'Incorrect action name {args.action.value}')
 

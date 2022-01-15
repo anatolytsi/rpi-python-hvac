@@ -1,4 +1,7 @@
 import os
+import time
+from threading import Thread, Lock
+from typing import Callable
 
 import requests
 import enum
@@ -16,6 +19,104 @@ class Mode(enum.Enum):
     MANUAL = 'manual'
     AUTO_WINTER = 'autoWinter'
     AUTO_SUMMER = 'autoSummer'
+
+
+class HvacRpi:
+    def __init__(self):
+        self._he_temperatures = [.0, .0, .0]
+        self._outside_temperature = .0
+        self._inside_temperature = .0
+        self._valves_states = [False, False, False, False]
+        self._feed_temperature = 0
+        self._hysteresis = .0
+        self._mode = 'manual'
+        self._values_fresh = False
+        self._updater_thread = None
+        self._lock = Lock()
+        self._update_interval = 5000
+        self._update_stop_after = 300000
+
+    def _updater(self):
+        self._values_fresh = True
+        counter = 0
+        exit_counter = self._update_stop_after // self._update_interval
+        while counter < exit_counter:
+            with self._lock:
+                for num, temperature in enumerate(self._he_temperatures):
+                    self._he_temperatures[num] = get_he_temperature(num + 1)
+                self._outside_temperature = get_outside_temperature()
+                self._inside_temperature = get_inside_temperature()
+                for num, valve_state in enumerate(self._valves_states):
+                    self._he_temperatures[num] = get_valve_opened(num + 1)
+                self._feed_temperature = get_feed_temperature()
+                self._hysteresis = get_hysteresis()
+                self._mode = get_mode()
+            time.sleep(self._update_interval)
+            counter += 1
+        self._values_fresh = False
+
+    def _start_updater(self):
+        self._updater_thread = Thread(daemon=True, target=self._updater)
+        self._updater_thread.start()
+
+    def _get_param_value(self, param_name: str, updater: Callable, num: int = None):
+        if param_name not in self.__dict__:
+            raise Exception(f'Class parameter {param_name} is undefined')
+        with self._lock:
+            if isinstance(self.__dict__[param_name], list):
+                if num is None:
+                    raise Exception(f'Number argument should be defined when list is passed')
+                if not self._values_fresh:
+                    self.__dict__[param_name][num - 1] = updater(num)
+                    self._start_updater()
+                return self.__dict__[param_name][num - 1]
+            else:
+                if not self._values_fresh:
+                    self.__dict__[param_name] = updater()
+                    self._start_updater()
+                return self.__dict__[param_name]
+
+    def _set_param_value(self, setter: Callable, value=None):
+        with self._lock:
+            if not self._values_fresh:
+                self._start_updater()
+            return setter(value)
+
+    def get_he_temperature(self, number: int) -> float:
+        return self._get_param_value('_he_temperatures', get_he_temperature, number)
+
+    def get_outside_temperature(self) -> float:
+        return self._get_param_value('_outside_temperature', get_outside_temperature)
+
+    def get_inside_temperature(self) -> float:
+        return self._get_param_value('_inside_temperature', get_inside_temperature)
+
+    def get_valve_opened(self, number: int) -> bool:
+        return self._get_param_value('_valves_states', get_valve_opened, number)
+
+    def get_feed_temperature(self) -> float:
+        return self._get_param_value('_feed_temperature', get_feed_temperature)
+
+    def set_feed_temperature(self, temperature) -> bool:
+        return self._set_param_value(set_feed_temperature, temperature)
+
+    def get_hysteresis(self) -> float:
+        return self._get_param_value('_hysteresis', get_hysteresis)
+
+    def set_hysteresis(self, hysteresis) -> bool:
+        return self._set_param_value(set_hysteresis, hysteresis)
+
+    def get_mode(self) -> Mode:
+        return self._get_param_value('_mode', get_mode)
+
+    def set_mode(self, mode: Mode) -> bool:
+        return self._set_param_value(set_mode, mode)
+
+    def open_valve(self, number: int):
+        return self._set_param_value(open_valve, number)
+
+    def close_valve(self, number: int):
+        return self._set_param_value(close_valve, number)
 
 
 def make_request(method: str, url, **kwargs) -> requests.Response:
