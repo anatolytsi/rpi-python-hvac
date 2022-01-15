@@ -29,7 +29,7 @@ class HvacRpi:
         self._valves_states = [False, False, False, False]
         self._feed_temperature = 0
         self._hysteresis = .0
-        self._mode = 'manual'
+        self._mode = Mode.MANUAL
         self._values_fresh = False
         self._updater_thread = None
         self._lock = Lock()
