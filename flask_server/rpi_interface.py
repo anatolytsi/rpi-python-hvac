@@ -241,7 +241,7 @@ def get_valve_activated(number: int) -> Mode:
     return response.json()
 
 
-def set_mode(number: int, activated: bool):
+def set_valve_activated(number: int, activated: bool):
     """
     Sets valve activated status
     :param number: valve number
