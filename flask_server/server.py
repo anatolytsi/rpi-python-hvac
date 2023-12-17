@@ -7,7 +7,7 @@ from flask_restful import Api
 
 from flask_server.rpi_interface import HvacRpi
 from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
-    SuAccess
+    SuAccess, ValveActivated
 
 
 class Server:
@@ -31,6 +31,7 @@ class Server:
         Hysteresis.hvac = hvac
         Mode.hvac = hvac
         Valve.hvac = hvac
+        ValveActivated.hvac = hvac
 
     def _add_resources(self):
         self.api.add_resource(TemperatureHe, '/temperatureHe/<int:number>')
@@ -40,6 +41,7 @@ class Server:
         self.api.add_resource(Hysteresis, '/hysteresis')
         self.api.add_resource(Mode, '/mode')
         self.api.add_resource(Valve, '/valve/<int:number>')
+        self.api.add_resource(ValveActivated, '/valveActivated/<int:number>')
         self.api.add_resource(SuAccess, '/suAccess')
 
     def run(self):

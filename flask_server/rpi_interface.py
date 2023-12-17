@@ -27,6 +27,7 @@ class HvacRpi:
         self._outside_temperature = .0
         self._inside_temperature = .0
         self._valves_states = [False, False, False, False]
+        self._valves_activated_states = [True, True, True, True]
         self._feed_temperature = 0
         self._hysteresis = .0
         self._mode = Mode.MANUAL
@@ -76,11 +77,11 @@ class HvacRpi:
                     self._start_updater()
                 return self.__dict__[param_name]
 
-    def _set_param_value(self, setter: Callable, value=None):
+    def _set_param_value(self, setter: Callable, *args):
         with self._lock:
             if not self._values_fresh:
                 self._start_updater()
-            return setter(value)
+            return setter(*args)
 
     def get_he_temperature(self, number: int) -> float:
         return self._get_param_value('_he_temperatures', get_he_temperature, number)
@@ -111,6 +112,12 @@ class HvacRpi:
 
     def set_mode(self, mode: Mode) -> bool:
         return self._set_param_value(set_mode, mode)
+    
+    def get_valve_activated(self, number) -> bool:
+        return self._get_param_value('_valves_activated_states', get_valve_activated, number)
+    
+    def set_valve_activated(self, number, activated) -> bool:
+        return self._set_param_value(set_valve_activated, number, activated)
 
     def open_valve(self, number: int):
         return self._set_param_value(open_valve, number)

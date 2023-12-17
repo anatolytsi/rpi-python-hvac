@@ -151,6 +151,23 @@ class Valve(Resource):
             raise Exception(f'Incorrect action name {args.action.value}')
 
 
+class ValveActivated(Resource):
+    hvac = None
+
+    @catch_error
+    @auth.require(roles=('user', 'superuser'))
+    def get(self, number):
+        return self.hvac.get_valve_activated(number)
+
+    @catch_error
+    @auth.require(roles=('superuser',))
+    def post(self, number):
+        parser = reqparse.RequestParser()
+        parser.add_argument('action', type=bool, help='Is valve activated')
+        args = parser.parse_args()
+        return self.hvac.get_valve_activated(number, args.value)
+
+
 class SuAccess(Resource):
     @staticmethod
     @auth.require(roles=('user', 'superuser'))
