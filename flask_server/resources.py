@@ -163,7 +163,7 @@ class ValveActivated(Resource):
     @auth.require(roles=('superuser',))
     def post(self, number):
         parser = reqparse.RequestParser()
-        parser.add_argument('action', type=bool, help='Is valve activated')
+        parser.add_argument('value', type=bool, help='Is valve activated')
         args = parser.parse_args()
         return self.hvac.get_valve_activated(number, args.value)
 
