@@ -113,7 +113,7 @@ class Mode(Resource):
     @catch_error
     @auth.require(roles=('user', 'superuser'))
     def get(self):
-        return self.hvac.get_mode()
+        return self.hvac.get_mode().value
 
     @catch_error
     @auth.require(roles=('superuser',))
