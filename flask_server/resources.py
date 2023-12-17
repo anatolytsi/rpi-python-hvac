@@ -119,9 +119,10 @@ class Mode(Resource):
     @auth.require(roles=('superuser',))
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('type', type=OpMode, help='Operation mode')
+        parser.add_argument('type', type=str, help='Operation mode')
         args = parser.parse_args()
-        return self.hvac.set_mode(args.type)
+        mode_type = OpMode(args.type)
+        return self.hvac.set_mode(mode_type)
 
 
 class ValveAction(Enum):
@@ -141,11 +142,12 @@ class Valve(Resource):
     @auth.require(roles=('superuser',))
     def post(self, number):
         parser = reqparse.RequestParser()
-        parser.add_argument('action', type=ValveAction, help='Valve action type')
+        parser.add_argument('action', type=str, help='Valve action type')
         args = parser.parse_args()
-        if args.action.value == 'open':
+        valve_action = ValveAction(args.action)
+        if valve_action.value == 'open':
             return self.hvac.open_valve(number)
-        elif args.action.value == 'close':
+        elif valve_action.value == 'close':
             return self.hvac.close_valve(number)
         else:
             raise Exception(f'Incorrect action name {args.action.value}')
