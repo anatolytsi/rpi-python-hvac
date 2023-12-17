@@ -131,6 +131,26 @@ def set_mode(mode: Mode):
     return response.status_code // 100 == 2
 
 
+def get_valve_activated(number: int) -> Mode:
+    """
+    Gets valve activated status
+    :return: valve activated status
+    """
+    response = make_request('get', f'{HVAC_URL}/properties/valveActivated{number}')
+    return response.json()
+
+
+def set_mode(number: int, activated: bool):
+    """
+    Sets valve activated status
+    :param number: valve number
+    :param activated: is valve activated
+    :return: operation success
+    """
+    response = make_request('put', f'{HVAC_URL}/properties/valveActivated{number}', data=activated)
+    return response.status_code // 100 == 2
+
+
 def open_valve(number: int):
     """
     Opens valve with a given number
