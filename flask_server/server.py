@@ -5,7 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 
-from flask_server.rpi_interface import HvacRpi
+from rpi_interface import HvacRpi
 from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
     SuAccess, ValveActivated
 

@@ -1,3 +1,4 @@
+Werkzeug==2.2.2
 Flask==2.0.2
 flask-basic-roles==0.2
 Flask-Cors==3.0.10
