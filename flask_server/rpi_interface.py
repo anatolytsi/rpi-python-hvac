@@ -48,7 +48,7 @@ class HvacRpi:
                 self._outside_temperature = get_outside_temperature()
                 self._inside_temperature = get_inside_temperature()
                 for num, valve_state in enumerate(self._valves_states):
-                    self._he_temperatures[num] = get_valve_opened(num + 1)
+                    self._valves_states[num] = get_valve_opened(num + 1)
                 self._feed_temperature = get_feed_temperature()
                 self._hysteresis = get_hysteresis()
                 self._mode = get_mode()
