@@ -226,7 +226,7 @@ def get_mode() -> Mode:
     :return: operation mode
     """
     response = make_request('get', f'{HVAC_URL}/properties/mode')
-    return response.json()
+    return Mode(response.json())
 
 
 def set_mode(mode: Mode):
