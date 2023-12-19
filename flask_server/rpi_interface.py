@@ -151,7 +151,6 @@ def make_request(method: str, url, **kwargs) -> requests.Response:
     :return: requests.Response
     """
     response = requests.request(method, url, **kwargs)
-    time.sleep(50)
     if response.status_code // 100 != 2:
         raise Exception(f'RPi replied with code {response.status_code}')
     return response
