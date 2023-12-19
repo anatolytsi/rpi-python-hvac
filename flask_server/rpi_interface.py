@@ -56,9 +56,11 @@ class HvacRpi:
         print('Thread finished')
 
     def _start_updater(self):
-        print('Requesting an update')
-        self._updater_thread = Process(daemon=True, target=self._updater)
-        self._updater_thread.start()
+        if self._lock.acquire(timeout=100):
+            print('Requesting an update')
+            self._updater_thread = Process(daemon=True, target=self._updater)
+            self._updater_thread.start()
+            self._lock.release()
 
     def _are_values_fresh(self):
         need_update = (time.time() - self._last_refresh_timestamp) < self._update_after
@@ -73,26 +75,20 @@ class HvacRpi:
             if num is None:
                 raise Exception(f'Number argument should be defined when list is passed')
             if not values_fresh:
-                if self._lock.acquire(timeout=100):
-                    self._start_updater()
-                    self._lock.release()
+                self._start_updater()
             print(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
             return self.__dict__[param_name][num - 1]
         else:
             if not values_fresh:
                 self.__dict__[param_name] = updater()
-                if self._lock.acquire(timeout=100):
-                    self._start_updater()
-                    self._lock.release()
+                self._start_updater()
             print(f'{param_name} = {self.__dict__[param_name]}')
             return self.__dict__[param_name]
 
     def _set_param_value(self, setter: Callable, *args):
         with self._lock:
             if not self._are_values_fresh():
-                if self._lock.acquire(timeout=100):
-                    self._start_updater()
-                    self._lock.release()
+                self._start_updater()
             return setter(*args)
 
     def get_he_temperature(self, number: int) -> float:
