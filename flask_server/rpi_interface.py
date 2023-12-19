@@ -68,27 +68,31 @@ class HvacRpi:
     def _get_param_value(self, param_name: str, updater: Callable, num: int = None):
         if param_name not in self.__dict__:
             raise Exception(f'Class parameter {param_name} is undefined')
-        with self._lock:
-            values_fresh = self._are_values_fresh()
-            if isinstance(self.__dict__[param_name], list):
-                if num is None:
-                    raise Exception(f'Number argument should be defined when list is passed')
-                if not values_fresh:
-                    self.__dict__[param_name][num - 1] = updater(num)
+        values_fresh = self._are_values_fresh()
+        if isinstance(self.__dict__[param_name], list):
+            if num is None:
+                raise Exception(f'Number argument should be defined when list is passed')
+            if not values_fresh:
+                if self._lock.acquire(timeout=100):
                     self._start_updater()
-                print(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
-                return self.__dict__[param_name][num - 1]
-            else:
-                if not values_fresh:
-                    self.__dict__[param_name] = updater()
+                    self._lock.release()
+            print(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
+            return self.__dict__[param_name][num - 1]
+        else:
+            if not values_fresh:
+                self.__dict__[param_name] = updater()
+                if self._lock.acquire(timeout=100):
                     self._start_updater()
-                print(f'{param_name} = {self.__dict__[param_name]}')
-                return self.__dict__[param_name]
+                    self._lock.release()
+            print(f'{param_name} = {self.__dict__[param_name]}')
+            return self.__dict__[param_name]
 
     def _set_param_value(self, setter: Callable, *args):
         with self._lock:
             if not self._are_values_fresh():
-                self._start_updater()
+                if self._lock.acquire(timeout=100):
+                    self._start_updater()
+                    self._lock.release()
             return setter(*args)
 
     def get_he_temperature(self, number: int) -> float:
