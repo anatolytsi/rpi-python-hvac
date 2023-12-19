@@ -32,13 +32,14 @@ class HvacRpi:
         self._hysteresis = .0
         self._mode = Mode.MANUAL
         self._updater_thread = None
-        self._lock = Lock()
+        self._starter_lock = Lock()
+        self._pr_lock = Lock()
         self._last_refresh_timestamp = 0
         self._update_after = 5000
 
     def _updater(self):
         print('Starting thread')
-        with self._lock:
+        with self._pr_lock:
             print('Starting update')
             for num, temperature in enumerate(self._he_temperatures):
                 self._he_temperatures[num] = get_he_temperature(num + 1)
@@ -56,11 +57,11 @@ class HvacRpi:
         print('Thread finished')
 
     def _start_updater(self):
-        if self._lock.acquire(timeout=100):
+        if self._starter_lock.acquire(timeout=100) and self._pr_lock.acquire(timeout=100):
             print('Requesting an update')
             self._updater_thread = Process(daemon=True, target=self._updater)
             self._updater_thread.start()
-            self._lock.release()
+            self._starter_lock.release()
 
     def _are_values_fresh(self):
         need_update = (time.time() - self._last_refresh_timestamp) < self._update_after
@@ -86,7 +87,7 @@ class HvacRpi:
             return self.__dict__[param_name]
 
     def _set_param_value(self, setter: Callable, *args):
-        with self._lock:
+        with self._pr_lock:
             if not self._are_values_fresh():
                 self._start_updater()
             return setter(*args)
