@@ -45,7 +45,7 @@ class Server:
         self.api.add_resource(SuAccess, '/suAccess')
 
     def run(self):
-        self.app.run(self.host, self.port, self.debug)
+        self.app.run(self.host, self.port, self.debug, threaded=True)
 
 
 def main():
