@@ -82,8 +82,8 @@ class TemperatureHe(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self, number):
         return self.hvac.get_he_temperature(number)
 
@@ -92,8 +92,8 @@ class TemperatureOutside(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self):
         return self.hvac.get_outside_temperature()
 
@@ -102,8 +102,8 @@ class TemperatureInside(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self):
         return self.hvac.get_inside_temperature()
 
@@ -112,14 +112,14 @@ class TemperatureFeed(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self):
         return self.hvac.get_feed_temperature()
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=float, help='Feed temperature value')
@@ -131,14 +131,14 @@ class Hysteresis(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self):
         return self.hvac.get_hysteresis()
 
     @catch_error
-    @auth.require(roles=('superuser',))
     @cross_origin()
+    @auth.require(roles=('superuser',))
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=int, help='Hysteresis value')
@@ -150,13 +150,14 @@ class Mode(Resource):
     hvac = None
 
     @catch_error
+    @cross_origin()
     @auth.require(roles=('user', 'superuser'))
     def get(self):
         return self.hvac.get_mode().value
 
     @catch_error
-    @auth.require(roles=('superuser',))
     @cross_origin()
+    @auth.require(roles=('superuser',))
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, help='Operation mode')
@@ -174,14 +175,14 @@ class Valve(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self, number):
         return self.hvac.get_valve_opened(number)
 
     @catch_error
-    @auth.require(roles=('superuser',))
     @cross_origin()
+    @auth.require(roles=('superuser',))
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, help='Valve action type')
@@ -199,14 +200,14 @@ class ValveActivated(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self, number):
         return self.hvac.get_valve_activated(number)
 
     @catch_error
-    @auth.require(roles=('superuser',))
     @cross_origin()
+    @auth.require(roles=('superuser',))
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=bool, help='Is valve activated')
@@ -218,16 +219,16 @@ class FullState(Resource):
     hvac = None
 
     @catch_error
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get(self):
         return dataclasses.asdict(self.hvac.get_full_state())
 
 
 class SuAccess(Resource):
     @staticmethod
-    @auth.require(roles=('user', 'superuser'))
     @cross_origin()
+    @auth.require(roles=('user', 'superuser'))
     def get():
         token = request.headers['Authorization']
         username, password = base64.b64decode(token.split('Basic ')[-1]).decode('utf-8').split(':')
