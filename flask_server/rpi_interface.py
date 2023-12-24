@@ -286,7 +286,7 @@ def set_valve_activated(number: int, activated: bool):
     :param activated: is valve activated
     :return: operation success
     """
-    response = make_request('put', f'{HVAC_URL}/properties/valveActivated{number}', data=f'{activated}')
+    response = make_request('put', f'{HVAC_URL}/properties/valveActivated{number}', data=f'{"true" if activated else "false"}')
     return response.status_code // 100 == 2
 
 
