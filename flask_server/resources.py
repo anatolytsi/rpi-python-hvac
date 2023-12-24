@@ -1,6 +1,7 @@
 import base64
 import os
 import hashlib
+import dataclasses
 from enum import Enum
 
 from dotenv import load_dotenv
@@ -168,6 +169,15 @@ class ValveActivated(Resource):
         parser.add_argument('value', type=bool, help='Is valve activated')
         args = parser.parse_args()
         return self.hvac.get_valve_activated(number, args.value)
+
+
+class FullState(Resource):
+    hvac = None
+
+    @catch_error
+    @auth.require(roles=('user', 'superuser'))
+    def get(self):
+        return dataclasses.asdict(self.hvac.get_full_state())
 
 
 class SuAccess(Resource):

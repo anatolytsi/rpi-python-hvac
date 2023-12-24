@@ -2,6 +2,7 @@ import os
 import time
 from threading import Thread, Lock
 from typing import Callable
+from dataclasses import dataclass
 
 import requests
 import enum
@@ -19,6 +20,18 @@ class Mode(enum.Enum):
     MANUAL = 'manual'
     AUTO_WINTER = 'autoWinter'
     AUTO_SUMMER = 'autoSummer'
+
+
+@dataclass
+class RpiState:
+    he_temperatures: list
+    feed_temperature: float
+    hysteresis: int
+    outside_temperature: float
+    inside_temperature: float
+    valves_states: list
+    valves_activated_states: list
+    mode: str
 
 
 class HvacRpi:
@@ -140,6 +153,20 @@ class HvacRpi:
     def close_valve(self, number: int):
         # return close_valve(number)
         return self._set_param_value(close_valve, number)
+
+    def get_full_state(self) -> RpiState:
+        rpiState = RpiState(
+            he_temperatures=self._he_temperatures,
+            feed_temperature=self._feed_temperature,
+            hysteresis=self._hysteresis,
+            outside_temperature=self._outside_temperature,
+            inside_temperature=self._inside_temperature,
+            valves_states=self._valves_states,
+            valves_activated_states=self._valves_activated_states,
+            mode=self._mode.value
+        )
+        self.log(rpiState)
+        return rpiState
 
 
 def make_request(method: str, url, **kwargs) -> requests.Response:
