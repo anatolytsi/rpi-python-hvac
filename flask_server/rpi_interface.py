@@ -56,7 +56,7 @@ class HvacRpi:
         self._last_refresh_timestamp = time.time()
         print('Thread finished')
 
-    def _start_updater(self):
+    def start_updater(self):
         if self._starter_lock.acquire(timeout=100) and self._pr_lock.acquire(timeout=100):
             print('Requesting an update')
             self._updater_thread = Process(daemon=True, target=self._updater)
@@ -71,82 +71,61 @@ class HvacRpi:
     def _get_param_value(self, param_name: str, updater: Callable, num: int = None):
         if param_name not in self.__dict__:
             raise Exception(f'Class parameter {param_name} is undefined')
-        values_fresh = self._are_values_fresh()
         if isinstance(self.__dict__[param_name], list):
             if num is None:
                 raise Exception(f'Number argument should be defined when list is passed')
-            if not values_fresh:
-                self._start_updater()
             print(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
             return self.__dict__[param_name][num - 1]
         else:
-            if not values_fresh:
-                self.__dict__[param_name] = updater()
-                self._start_updater()
             print(f'{param_name} = {self.__dict__[param_name]}')
             return self.__dict__[param_name]
 
     def _set_param_value(self, setter: Callable, *args):
         with self._pr_lock:
-            if not self._are_values_fresh():
-                self._start_updater()
             return setter(*args)
 
     def get_he_temperature(self, number: int) -> float:
-        # return get_he_temperature(number)
-        return self._get_param_value('_he_temperatures', get_he_temperature, number)
+        return get_he_temperature(number)
 
     def get_outside_temperature(self) -> float:
-        # return get_outside_temperature()
-        return self._get_param_value('_outside_temperature', get_outside_temperature)
+        return get_outside_temperature()
 
     def get_inside_temperature(self) -> float:
-        # return get_inside_temperature()
-        return self._get_param_value('_inside_temperature', get_inside_temperature)
+        return get_inside_temperature()
 
     def get_valve_opened(self, number: int) -> bool:
-        # return get_valve_opened(number)
-        return self._get_param_value('_valves_states', get_valve_opened, number)
+        return get_valve_opened(number)
 
     def get_feed_temperature(self) -> float:
-        # return get_feed_temperature()
-        return self._get_param_value('_feed_temperature', get_feed_temperature)
+        return get_feed_temperature()
 
     def set_feed_temperature(self, temperature) -> bool:
-        # return set_feed_temperature(temperature)
-        return self._set_param_value(set_feed_temperature, temperature)
+        return set_feed_temperature(temperature)
 
     def get_hysteresis(self) -> float:
-        # return get_hysteresis()
-        return self._get_param_value('_hysteresis', get_hysteresis)
+        return get_hysteresis()
 
     def set_hysteresis(self, hysteresis) -> bool:
-        # return set_hysteresis(hysteresis)
-        return self._set_param_value(set_hysteresis, hysteresis)
+        return set_hysteresis(hysteresis)
 
     def get_mode(self) -> Mode:
-        # return get_mode()
-        return self._get_param_value('_mode', get_mode)
+        return get_mode()
 
     def set_mode(self, mode: Mode) -> bool:
-        # return set_mode(mode)
-        return self._set_param_value(set_mode, mode)
+        return set_mode(mode)
     
     def get_valve_activated(self, number) -> bool:
-        # return get_valve_activated(number)
-        return self._get_param_value('_valves_activated_states', get_valve_activated, number)
+        return get_valve_activated(number)
     
     def set_valve_activated(self, number, activated) -> bool:
-        # return set_valve_activated(number, activated)
-        return self._set_param_value(set_valve_activated, number, activated)
+        return set_valve_activated(number, activated)
 
     def open_valve(self, number: int):
-        # return open_valve(number)
-        return self._set_param_value(open_valve, number)
+        return open_valve(number)
+        # return self._set_param_value(open_valve, number)
 
     def close_valve(self, number: int):
-        # return close_valve(number)
-        return self._set_param_value(close_valve, number)
+        return close_valve(number)
 
 
 def make_request(method: str, url, **kwargs) -> requests.Response:

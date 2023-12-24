@@ -1,5 +1,6 @@
 import os
 import configparser
+import threading
 
 from flask import Flask
 from flask_cors import CORS
@@ -21,6 +22,7 @@ class Server:
         hvac = HvacRpi()
         self._assign_hvac(hvac)
         self._add_resources()
+        hvac.start_updater()
 
     @staticmethod
     def _assign_hvac(hvac: HvacRpi):
@@ -45,7 +47,7 @@ class Server:
         self.api.add_resource(SuAccess, '/suAccess')
 
     def run(self):
-        self.app.run(self.host, self.port, self.debug, threaded=True)
+        threading.Thread(target=lambda: self.app.run(self.host, self.port, self.debug, threaded=True, use_reloader=False)).start()
 
 
 def main():
