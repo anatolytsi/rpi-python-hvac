@@ -2,13 +2,13 @@ import base64
 import os
 import hashlib
 import dataclasses
+import functools
 from enum import Enum
 
 from dotenv import load_dotenv
-from flask import request
+from flask import request, make_response, Response, basestring
 from flask_restful import Resource, reqparse
 from flask_basic_roles import BasicRoleAuth
-from flask_cors import cross_origin
 
 from rpi_interface import Mode as OpMode
 
@@ -29,6 +29,36 @@ auth.add_user(user=basic_username, password=basic_password, roles='user')
 auth.add_user(user=basic_username_hash, password=basic_password_hash, roles='user')
 auth.add_user(user=su_username, password=su_password, roles='superuser')
 auth.add_user(user=su_username_hash, password=su_password_hash, roles='superuser')
+
+
+def cross_origin(origin="*"):
+    def cross_origin(func):
+        @functools.wraps(func)
+        def _decoration(*args, **kwargs):
+            ret = func(*args, **kwargs)
+            _cross_origin_header = {"Access-Control-Allow-Origin": origin,
+                                    "Access-Control-Allow-Headers":
+                                        "Origin, X-Requested-With, Content-Type, Accept"}
+            if isinstance(ret, tuple):
+                if len(ret) == 2 and isinstance(ret[0], dict) and isinstance(ret[1], int):
+                    # this is for handle response like: ```{'status': 1, "data":"ok"}, 200```
+                    return ret[0], ret[1], _cross_origin_header
+                elif isinstance(ret, basestring):
+                    response = make_response(ret)
+                    response.headers["Access-Control-Allow-Origin"] = origin
+                    response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept"
+                    return response
+                elif isinstance(ret, Response):
+                    ret.headers["Access-Control-Allow-Origin"] = origin
+                    ret.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept"
+                    return ret
+                else:
+                    raise ValueError("Cannot handle cross origin, because the return value is not matched!")
+            return ret
+
+        return _decoration
+
+    return cross_origin
 
 
 def catch_error(func):
@@ -53,7 +83,7 @@ class TemperatureHe(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self, number):
         return self.hvac.get_he_temperature(number)
 
@@ -63,7 +93,7 @@ class TemperatureOutside(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self):
         return self.hvac.get_outside_temperature()
 
@@ -73,7 +103,7 @@ class TemperatureInside(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self):
         return self.hvac.get_inside_temperature()
 
@@ -83,13 +113,13 @@ class TemperatureFeed(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self):
         return self.hvac.get_feed_temperature()
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=float, help='Feed temperature value')
@@ -102,13 +132,13 @@ class Hysteresis(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self):
         return self.hvac.get_hysteresis()
 
     @catch_error
     @auth.require(roles=('superuser',))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=int, help='Hysteresis value')
@@ -126,7 +156,7 @@ class Mode(Resource):
 
     @catch_error
     @auth.require(roles=('superuser',))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, help='Operation mode')
@@ -145,13 +175,13 @@ class Valve(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self, number):
         return self.hvac.get_valve_opened(number)
 
     @catch_error
     @auth.require(roles=('superuser',))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, help='Valve action type')
@@ -170,13 +200,13 @@ class ValveActivated(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self, number):
         return self.hvac.get_valve_activated(number)
 
     @catch_error
     @auth.require(roles=('superuser',))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=bool, help='Is valve activated')
@@ -189,7 +219,7 @@ class FullState(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get(self):
         return dataclasses.asdict(self.hvac.get_full_state())
 
@@ -197,7 +227,7 @@ class FullState(Resource):
 class SuAccess(Resource):
     @staticmethod
     @auth.require(roles=('user', 'superuser'))
-    @cross_origin(supports_credentials=True)
+    @cross_origin()
     def get():
         token = request.headers['Authorization']
         username, password = base64.b64decode(token.split('Basic ')[-1]).decode('utf-8').split(':')
