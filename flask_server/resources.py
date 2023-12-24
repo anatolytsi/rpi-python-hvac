@@ -212,7 +212,7 @@ class ValveActivated(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=bool, help='Is valve activated')
         args = parser.parse_args()
-        return self.hvac.get_valve_activated(number, args.value)
+        return self.hvac.set_valve_activated(number, args.value)
 
 
 class FullState(Resource):
