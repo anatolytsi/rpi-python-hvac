@@ -47,7 +47,7 @@ class HvacRpi:
         self._updater_thread = None
         self._pr_lock = Lock()
         self._last_refresh_timestamp = 0
-        self._update_after = 60
+        self._update_after = 30
         if log is not None:
             self.log = log.info
         else:
@@ -92,12 +92,6 @@ class HvacRpi:
             self.log(f'{param_name} = {self.__dict__[param_name]}')
             return self.__dict__[param_name]
 
-    def _set_param_value(self, setter: Callable, *args):
-        with self._pr_lock:
-            res = setter(*args)
-            self._update_values()
-            return res
-
     def get_he_temperature(self, number: int) -> float:
         # return get_he_temperature(number)
         return self._get_param_value('_he_temperatures', get_he_temperature, number)
@@ -119,40 +113,34 @@ class HvacRpi:
         return self._get_param_value('_feed_temperature', get_feed_temperature)
 
     def set_feed_temperature(self, temperature) -> bool:
-        # return set_feed_temperature(temperature)
-        return self._set_param_value(set_feed_temperature, temperature)
+        return set_feed_temperature(temperature)
 
     def get_hysteresis(self) -> float:
         # return get_hysteresis()
         return self._get_param_value('_hysteresis', get_hysteresis)
 
     def set_hysteresis(self, hysteresis) -> bool:
-        # return set_hysteresis(hysteresis)
-        return self._set_param_value(set_hysteresis, hysteresis)
+        return set_hysteresis(hysteresis)
 
     def get_mode(self) -> Mode:
         # return get_mode()
         return self._get_param_value('_mode', get_mode)
 
     def set_mode(self, mode: Mode) -> bool:
-        # return set_mode(mode)
-        return self._set_param_value(set_mode, mode)
+        return set_mode(mode)
 
     def get_valve_activated(self, number) -> bool:
         # return get_valve_activated(number)
         return self._get_param_value('_valves_activated_states', get_valve_activated, number)
 
     def set_valve_activated(self, number, activated) -> bool:
-        # return set_valve_activated(number, activated)
-        return self._set_param_value(set_valve_activated, number, activated)
+        return set_valve_activated(number, activated)
 
     def open_valve(self, number: int):
-        # return open_valve(number)
-        return self._set_param_value(open_valve, number)
+        return open_valve(number)
 
     def close_valve(self, number: int):
-        # return close_valve(number)
-        return self._set_param_value(close_valve, number)
+        return close_valve(number)
 
     def get_full_state(self) -> RpiState:
         rpiState = RpiState(
