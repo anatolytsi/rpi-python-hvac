@@ -22,7 +22,7 @@ class Mode(enum.Enum):
 
 
 class HvacRpi:
-    def __init__(self):
+    def __init__(self, log = None):
         self._he_temperatures = [.0, .0, .0]
         self._outside_temperature = .0
         self._inside_temperature = .0
@@ -36,11 +36,15 @@ class HvacRpi:
         self._pr_lock = Lock()
         self._last_refresh_timestamp = 0
         self._update_after = 5000
+        if log is not None:
+            self.log = log.info
+        else:
+            self.log = print
 
     def _updater(self):
-        print('Starting thread')
+        self.log('Starting thread')
         with self._pr_lock:
-            print('Starting update')
+            self.log('Starting update')
             for num, temperature in enumerate(self._he_temperatures):
                 self._he_temperatures[num] = get_he_temperature(num + 1)
             self._outside_temperature = get_outside_temperature()
@@ -52,20 +56,20 @@ class HvacRpi:
             self._feed_temperature = get_feed_temperature()
             self._hysteresis = get_hysteresis()
             self._mode = get_mode()
-            print('Update finished')
+            self.log('Update finished')
         self._last_refresh_timestamp = time.time()
-        print('Thread finished')
+        self.log('Thread finished')
 
     def start_updater(self):
         if self._starter_lock.acquire(timeout=100) and self._pr_lock.acquire(timeout=100):
-            print('Requesting an update')
+            self.log('Requesting an update')
             self._updater_thread = Process(daemon=True, target=self._updater)
             self._updater_thread.start()
             self._starter_lock.release()
 
     def _are_values_fresh(self):
         need_update = (time.time() - self._last_refresh_timestamp) < self._update_after
-        print(f'Are values fresh? {need_update}')
+        self.log(f'Are values fresh? {need_update}')
         return need_update
 
     def _get_param_value(self, param_name: str, updater: Callable, num: int = None):
@@ -74,10 +78,10 @@ class HvacRpi:
         if isinstance(self.__dict__[param_name], list):
             if num is None:
                 raise Exception(f'Number argument should be defined when list is passed')
-            print(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
+            self.log(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
             return self.__dict__[param_name][num - 1]
         else:
-            print(f'{param_name} = {self.__dict__[param_name]}')
+            self.log(f'{param_name} = {self.__dict__[param_name]}')
             return self.__dict__[param_name]
 
     def _set_param_value(self, setter: Callable, *args):
@@ -286,7 +290,7 @@ def close_valve(number: int):
 
 
 def main():
-    # print(get_he_temperature(1))
+    # self.log(get_he_temperature(1))
     print(close_valve(1))
 
 

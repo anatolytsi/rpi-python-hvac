@@ -1,6 +1,7 @@
 import os
 import configparser
 import threading
+from logging.config import dictConfig
 
 from flask import Flask
 from flask_cors import CORS
@@ -9,6 +10,25 @@ from flask_restful import Api
 from rpi_interface import HvacRpi
 from resources import TemperatureHe, TemperatureOutside, TemperatureInside, TemperatureFeed, Hysteresis, Mode, Valve, \
     SuAccess, ValveActivated
+
+dictConfig(
+    {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s] [%(levelname)s | %(module)s] %(message)s",
+                "datefmt": "%d.%m.%Y %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+            },
+        },
+        "root": {"level": "INFO", "handlers": ["console"]},
+    }
+)
 
 
 class Server:
@@ -19,10 +39,9 @@ class Server:
         self.app = Flask(__name__)
         cors = CORS(self.app, resources={r"/*": {"origins": "*"}})
         self.api = Api(self.app)
-        hvac = HvacRpi()
-        self._assign_hvac(hvac)
+        self.hvac = HvacRpi(log=self.app.logger)
+        self._assign_hvac(self.hvac)
         self._add_resources()
-        hvac.start_updater()
 
     @staticmethod
     def _assign_hvac(hvac: HvacRpi):
@@ -48,6 +67,7 @@ class Server:
 
     def run(self):
         threading.Thread(target=lambda: self.app.run(self.host, self.port, self.debug, threaded=True, use_reloader=False)).start()
+        self.hvac.start_updater()
 
 
 def main():
