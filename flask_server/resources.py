@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from flask import request
 from flask_restful import Resource, reqparse
 from flask_basic_roles import BasicRoleAuth
+from flask_cors import cross_origin
 
 from rpi_interface import Mode as OpMode
 
@@ -52,6 +53,7 @@ class TemperatureHe(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self, number):
         return self.hvac.get_he_temperature(number)
 
@@ -61,6 +63,7 @@ class TemperatureOutside(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self):
         return self.hvac.get_outside_temperature()
 
@@ -70,6 +73,7 @@ class TemperatureInside(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self):
         return self.hvac.get_inside_temperature()
 
@@ -79,11 +83,13 @@ class TemperatureFeed(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self):
         return self.hvac.get_feed_temperature()
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=float, help='Feed temperature value')
@@ -96,11 +102,13 @@ class Hysteresis(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self):
         return self.hvac.get_hysteresis()
 
     @catch_error
     @auth.require(roles=('superuser',))
+    @cross_origin(supports_credentials=True)
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=int, help='Hysteresis value')
@@ -118,6 +126,7 @@ class Mode(Resource):
 
     @catch_error
     @auth.require(roles=('superuser',))
+    @cross_origin(supports_credentials=True)
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('type', type=str, help='Operation mode')
@@ -136,11 +145,13 @@ class Valve(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self, number):
         return self.hvac.get_valve_opened(number)
 
     @catch_error
     @auth.require(roles=('superuser',))
+    @cross_origin(supports_credentials=True)
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, help='Valve action type')
@@ -159,11 +170,13 @@ class ValveActivated(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self, number):
         return self.hvac.get_valve_activated(number)
 
     @catch_error
     @auth.require(roles=('superuser',))
+    @cross_origin(supports_credentials=True)
     def post(self, number):
         parser = reqparse.RequestParser()
         parser.add_argument('value', type=bool, help='Is valve activated')
@@ -176,6 +189,7 @@ class FullState(Resource):
 
     @catch_error
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get(self):
         return dataclasses.asdict(self.hvac.get_full_state())
 
@@ -183,6 +197,7 @@ class FullState(Resource):
 class SuAccess(Resource):
     @staticmethod
     @auth.require(roles=('user', 'superuser'))
+    @cross_origin(supports_credentials=True)
     def get():
         token = request.headers['Authorization']
         username, password = base64.b64decode(token.split('Basic ')[-1]).decode('utf-8').split(':')

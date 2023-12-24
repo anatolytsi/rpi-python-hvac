@@ -37,7 +37,8 @@ class Server:
         self.port = port
         self.debug = debug
         self.app = Flask(__name__)
-        cors = CORS(self.app, resources={r"/*": {"origins": "*"}})
+        self.app.config['CORS_HEADERS'] = 'Content-Type'
+        cors = CORS(self.app, resources={r"/*": {"origins": "*"}}, support_credentials=True)
         self.api = Api(self.app)
         self.hvac = HvacRpi(log=self.app.logger)
         self._assign_hvac(self.hvac)
