@@ -6,7 +6,7 @@ import functools
 from enum import Enum
 
 from dotenv import load_dotenv
-from flask import request, make_response, Response, basestring
+from flask import request, make_response, Response
 from flask_restful import Resource, reqparse
 from flask_basic_roles import BasicRoleAuth
 
@@ -43,7 +43,7 @@ def cross_origin(origin="*"):
                 if len(ret) == 2 and isinstance(ret[0], dict) and isinstance(ret[1], int):
                     # this is for handle response like: ```{'status': 1, "data":"ok"}, 200```
                     return ret[0], ret[1], _cross_origin_header
-                elif isinstance(ret, basestring):
+                elif isinstance(ret, str):
                     response = make_response(ret)
                     response.headers["Access-Control-Allow-Origin"] = origin
                     response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept"
