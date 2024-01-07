@@ -36,14 +36,16 @@ class RpiState:
 
 class HvacRpi:
     def __init__(self, log = None):
-        self._he_temperatures = [.0, .0, .0]
-        self._outside_temperature = .0
-        self._inside_temperature = .0
-        self._valves_states = [False, False, False, False]
-        self._valves_activated_states = [True, True, True, True]
-        self._feed_temperature = 0
-        self._hysteresis = .0
-        self._mode = Mode.MANUAL
+        self._state = RpiState(
+            he_temperatures=[.0, .0, .0],
+            feed_temperature=.0,
+            hysteresis=0,
+            outside_temperature=.0,
+            inside_temperature=.0,
+            valves_states=[False, False, False, False],
+            valves_activated_states=[True, True, True, True],
+            mode=Mode.MANUAL
+        )
         self._updater_thread = None
         self._pr_lock = Lock()
         self._last_refresh_timestamp = 0
@@ -56,17 +58,7 @@ class HvacRpi:
     def _update_values(self):
         with self._pr_lock:
             self.log('Starting update')
-            for num, temperature in enumerate(self._he_temperatures):
-                self._he_temperatures[num] = get_he_temperature(num + 1)
-            self._outside_temperature = get_outside_temperature()
-            self._inside_temperature = get_inside_temperature()
-            for num, valve_state in enumerate(self._valves_states):
-                self._valves_states[num] = get_valve_opened(num + 1)
-            for num, valve_activated_state in enumerate(self._valves_activated_states):
-                self._valves_activated_states[num] = get_valve_activated(num + 1)
-            self._feed_temperature = get_feed_temperature()
-            self._hysteresis = get_hysteresis()
-            self._mode = get_mode()
+            self._state = get_all_states()
             self.log('Update finished')
 
     def _updater(self):
@@ -81,16 +73,16 @@ class HvacRpi:
         self._updater_thread.start()
 
     def _get_param_value(self, param_name: str, updater: Callable, num: int = None):
-        if param_name not in self.__dict__:
+        if param_name not in self._state.__dict__:
             raise Exception(f'Class parameter {param_name} is undefined')
-        if isinstance(self.__dict__[param_name], list):
+        if isinstance(self._state.__dict__[param_name], list):
             if num is None:
                 raise Exception(f'Number argument should be defined when list is passed')
-            self.log(f'{param_name} {num} = {self.__dict__[param_name][num - 1]}')
-            return self.__dict__[param_name][num - 1]
+            self.log(f'{param_name} {num} = {self._state.__dict__[param_name][num - 1]}')
+            return self._state.__dict__[param_name][num - 1]
         else:
-            self.log(f'{param_name} = {self.__dict__[param_name]}')
-            return self.__dict__[param_name]
+            self.log(f'{param_name} = {self._state.__dict__[param_name]}')
+            return self._state.__dict__[param_name]
 
     def get_he_temperature(self, number: int) -> float:
         # return get_he_temperature(number)
@@ -113,48 +105,49 @@ class HvacRpi:
         return self._get_param_value('_feed_temperature', get_feed_temperature)
 
     def set_feed_temperature(self, temperature) -> bool:
-        return set_feed_temperature(temperature)
+        status = set_feed_temperature(temperature)
+        self._update_values()
+        return status
 
     def get_hysteresis(self) -> float:
         # return get_hysteresis()
         return self._get_param_value('_hysteresis', get_hysteresis)
 
     def set_hysteresis(self, hysteresis) -> bool:
-        return set_hysteresis(hysteresis)
+        status = set_hysteresis(hysteresis)
+        self._update_values()
+        return status
 
     def get_mode(self) -> Mode:
         # return get_mode()
         return self._get_param_value('_mode', get_mode)
 
     def set_mode(self, mode: Mode) -> bool:
-        return set_mode(mode)
+        status = set_mode(mode)
+        self._update_values()
+        return status
 
     def get_valve_activated(self, number) -> bool:
         # return get_valve_activated(number)
         return self._get_param_value('_valves_activated_states', get_valve_activated, number)
 
     def set_valve_activated(self, number, activated) -> bool:
-        return set_valve_activated(number, activated)
+        status = set_valve_activated(number, activated)
+        self._update_values()
+        return status
 
     def open_valve(self, number: int):
-        return open_valve(number)
+        status = open_valve(number)
+        self._update_values()
+        return status
 
     def close_valve(self, number: int):
-        return close_valve(number)
+        status = close_valve(number)
+        self._update_values()
+        return status
 
     def get_full_state(self) -> RpiState:
-        rpiState = RpiState(
-            he_temperatures=self._he_temperatures,
-            feed_temperature=self._feed_temperature,
-            hysteresis=self._hysteresis,
-            outside_temperature=self._outside_temperature,
-            inside_temperature=self._inside_temperature,
-            valves_states=self._valves_states,
-            valves_activated_states=self._valves_activated_states,
-            mode=self._mode.value
-        )
-        self.log(rpiState)
-        return rpiState
+        return self._state
 
 
 def make_request(method: str, url, **kwargs) -> requests.Response:
@@ -312,6 +305,36 @@ def close_valve(number: int):
         raise Exception(f'Valve can be 1-4, not {number}')
     response = make_request('post', f'{HVAC_URL}/actions/closeValve{number}')
     return response.status_code // 100 == 2
+
+
+def get_all_states() -> RpiState or None:
+    """
+    Gets RPI full state
+    :return: full state
+    """
+    response = make_request('get', f'{HVAC_URL}/all/properties')
+    response_data = response.json()
+    rpiState = None
+    if response_data:
+        rpiState = RpiState(
+            he_temperatures=[response_data['temperatureHe1'],
+                            response_data['temperatureHe2'],
+                            response_data['temperatureHe3']],
+            feed_temperature=response_data['temperatureFeed'],
+            hysteresis=response_data['hysteresis'],
+            outside_temperature=response_data['temperatureOutside'],
+            inside_temperature=response_data['temperatureInside'],
+            valves_states=[response_data['valveOpened1'], 
+                        response_data['valveOpened2'], 
+                        response_data['valveOpened3'], 
+                        response_data['valveOpened4']],
+            valves_activated_states=[response_data['valveActivated1'], 
+                                    response_data['valveActivated2'], 
+                                    response_data['valveActivated3'], 
+                                    response_data['valveActivated4']],
+            mode=response_data['mode']
+        )
+    return rpiState
 
 
 def main():
